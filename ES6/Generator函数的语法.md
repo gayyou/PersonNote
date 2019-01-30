@@ -132,3 +132,240 @@ for...of循环可以自动遍历Generator函数生成的Iterator对象，且此�
 
 应为Generator对象执行完毕后会返回一个遍历器对象指针，则Iterator对象可以用的方法这个指针对象都可以用。比如用...扩展运算符、Array.from、解构赋值等。
 
+****
+
+### Generator.prototype.throw方法
+
+Generator返回的遍历器对象具有一个throw方法，可以在函数体外抛出错误，然后在Generator函数体内部捕获，示例代码如下：
+
+```JavaScript
+let g = function* () {
+    try {
+        yield;
+    } catch (e) {
+        console.log('内部捕获', e);
+    }
+}
+
+let i = g();
+i.next();
+
+try {
+    i.throw('异常a');
+    i.throw('异常b');
+} catch (e) {
+    console.log('外部异常： ' + e);
+}
+
+// 内部捕获异常a
+// 外部异常： 异常b
+```
+
+在Generator函数生成的遍历器对象的throw方法抛出的异常，内部执行的相对应的yield语句块会优先捕获到，然后才是外部捕获到异常。
+
+注意：这里的throw方法是遍历器对象的方法，并不是全局的throw方法，后者抛出的异常只能由全局进行捕获。
+
+****
+
+### Generator.prototype.return方法
+
+Generator函数返回的遍历器的return方法可以提前终止这个遍历器遍历，返回对象的value。示例代码如下：
+
+```JavaScript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+let g = gen();
+g.next();         // 1
+g.return('foo');  // foo
+g.next();         // undefined
+```
+
+但是，如果代码块中具有try...finally代码块的时候，会先返回finally里面的yield后再返回return的参数。示例代码如下：
+
+```javascript
+function* number() {
+  yield 1;
+  try {
+    yield 2;
+    yield 3;
+  } finally {
+    yield 4;
+    yield 5;
+  }
+  yield 6;
+}
+
+let n = number();
+console.log(n.next());
+console.log(n.next());
+console.log(n.return(7));
+console.log(n.next());
+console.log(n.next());
+
+// 结果如下
+{ value: 1, done: false }
+{ value: 2, done: false }
+{ value: 4, done: false }
+{ value: 5, done: false }
+{ value: 7, done: true }
+```
+
+上面的代码足以说明这种情况，在return语句中传入7，这个7会先被存储，等到finally代码块执行完毕后再执行next时候返回7。
+
+****
+
+### yield*表达式
+
+如果在Generator函数中调用另外一个Generator函数，则不会起任何作用，因为拿不到这个遍历器对象，拿不到遍历器对象则无法对Generator进行遍历。
+
+但是，有yield*表达式可以让一个Generator函数调用另外一个Generator函数。示例代码如下：
+
+```JavaScript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield* foo();
+  yield 6;
+  yield 7;
+}
+
+function* foo() {
+  yield 3;
+  yield 4;
+  yield 5;
+}
+
+let iter = gen();
+for (let item of iter) {
+  console.log(item);
+}
+
+// 执行结果如下
+1
+2
+3
+4
+5
+6
+7
+```
+
+上述代码中的遍历器对象yield*后面接的是遍历器对象。
+
+这种写法和for...of的写法效果一样，可以看做for...of写法的简写模式。但是前提是某个Generator函数是没有返回值的，因为for...of得到的并不会包含Generator的返回值。
+
+如果上述的foo函数具有返回值，则代理的gen函数在遍历完foo的时候回得到一个返回值。示例代码如下：
+
+```JavaScript
+function* foo() {
+  yield 2;
+  yield 3;
+  return 'foo';
+}
+
+function* gen() {
+  let v = yield* foo();
+  console.log(v);
+}
+
+let iter = gen();
+
+iter.next();
+iter.next();
+iter.next();
+
+// foo
+```
+
+****
+
+### Generator内部的this的问题
+
+Generator函数执行完毕总是返回这个遍历器对象，而不是返回这个作用域对象，所以无论在Generator内部怎么使用this，执行这个Generator都是不能够拿到的。示例代码说明：
+
+```JavaScript
+function* g() {
+    this.a = '1';
+}
+
+g.prototype.hello = function () {
+  return 'hi';
+}
+
+let obj = g();
+obj.next();
+
+console.log(obj instanceof g);
+console.log(obj.hello());
+console.log(obj.a);
+
+// true
+// hi
+// undefined
+```
+
+上述例子说明，运行完Generator得到的遍历器是这个Generator的实例对象，而且继承了g.prototype对象。
+
+Generator函数g在this对象上添加的东西，但是obj拿不到，同时Generator并不能够通过new进行构造函数，那么怎么同时利用this和next呢，下面一种方法：
+
+```JavaScript
+function* F() {
+  this.a = 1;
+  yield this.b = 2;
+  yield this.c = 3;
+}
+
+let obj = {};
+
+let f = F.call(obj);
+
+f.next();
+f.next();
+f.next();
+
+console.log(obj);
+//
+{
+  a: 1,
+  b: 2,
+  c: 3
+}
+```
+
+上面巧妙用执行F函数的时候将空对象obj作为作用域对象进行添加至F函数执行过程中，则可以获得到this的指向，但是这样就需要对两个对象进行操作，不太方面，有一种解决方案就是把obj换成F.prototype，这样就可以只用f去访问属性，这样做能够成立的原因是Generator执行的返回遍历器对象是这个函数的实例对象，则这个遍历器对象继承于这个函数的原型。
+
+****
+
+### Generator与状态机
+
+Generator是实现状态机的最佳结构，比如下面的例子：
+
+```JavaScript
+let ticking = true;
+let clock = () => {
+    if (ticking) {
+        console.log('ticking!');
+    } else {
+        console.log('Tock');
+    }
+    ticking = !ticking;
+}
+```
+
+上面执行一次clock就转变一下状态，这是一个状态机的简单实现。如果用Generator怎么实现呢？
+
+```JavaScript
+let clock = function* () {
+    while(true) {
+        yield console.log('ticking');
+        yield consoel.log('tock');
+    }
+}
+```
+
+上面状态就可以省去医德变量，同时也更符合函数式编程的思想。
+
