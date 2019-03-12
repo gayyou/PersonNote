@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>登陆界面</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="./css/login.css" />
+    <script src="./JavaScript/jquery-3.3.1.min.js"></script>
+    <script src="./JavaScript/util.js"></script>
+</head>
+<body>
+    <div class="page-container">
+        <div>
+            <div class="input-container">
+                <div class="header"><span>登陆</span></div>
+                <div class="inputs">
+                    <span class="tips"></span>
+                    <label class="input-label" for="email">请输入账号</label>
+                    <input class="inputArea" id="email" type="text" autocomplete="off">
+                    <div class="bottom-line"></div>
+                </div>
+                <div class="inputs">
+                    <span class="tips"></span>
+                    <label class="input-label" for="password">请输入密码</label>
+                    <input class="inputArea" id="password" type="password" autocomplete="off">
+                    <div class="bottom-line"></div>
+                </div>
+                <div class="button-container">
+                    <button id="submit-button">确认登陆</button>
+                    <a href="regist.html"><button class="switch-mode">注册账号</button></a>
+                </div>
+            </div>
+            <div class="layer-container normal" id="layer">
+                <div>
+                    <div class="layer-context"><span id="layer-context"></span></div>
+                    <button class="layer-button">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./JavaScript/login.js"></script>
+</body>
+</html>

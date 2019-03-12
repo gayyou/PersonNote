@@ -1,0 +1,226 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+button {
+    border: none;
+    outline: none;
+    cursor:pointer;             
+}
+a {
+    text-decoration:none;
+    resize: none;
+    outline: none;
+    color: #000;
+} 
+
+.page-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #b8e5f8;
+}
+.page-container>div {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: url(../image/background.png) center center;
+    background-size: cover;
+}
+.input-container {
+    position: relative;
+    width: 400px;
+    height: 420px;
+    /* overflow: hidden; */
+    margin: 150px auto;
+    background-color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 0 16px rgba(0, 0, 0, .3);
+}
+.input-container::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+.input-container>div {
+    position: relative;
+    width: 100%;
+    height: 25px;
+    margin-top: 30px
+}
+.inputs>input {
+    display: block;
+    margin: 0 auto;
+    width: 80%;
+    height: 30px;
+    border: none;
+    border-bottom: 1px solid #eee;
+    outline-style: none;
+}
+.inputs>input:hover {
+    border-bottom: 1px solid rgba(0, 0, 0, .3);
+}
+.header>span {
+    display: block;
+    width: 100%;
+    font-size: 1.8em;
+    text-align: center;
+    color: #0084ff;
+}
+.button-container button {
+    display: block;
+    margin: 10px auto;
+    width: 60%;
+    border-radius: 8px;
+    height: 35px;
+}
+.button-container>button {
+    background-color: #0084ff;
+    color: #fff;
+}
+.switch-mode {
+    background-color: #fff;
+    color: #000;
+    border: rgba(0, 0, 0, .3) 1px solid;
+}
+.code {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.code>label {
+    display: block;
+    width: 30%;
+    font-size: 14px;
+    color: #111;
+    text-align: center;
+    border-left: 1px solid #000;
+    cursor: pointer;
+}
+.code>label:hover {
+    color: #0084ff;
+}
+.code>input {
+    width: 50%!important;
+    margin: 0!important;
+}
+
+.inputs>label {
+    cursor: text;
+    position: absolute;
+    font-size: 14px;
+    color: rgba(0, 0, 0, .7);
+    left: 40px;
+    top: 5px;
+    transition: all .25s ease;
+}
+.label-active {
+    transform: translate(-8px, -20px) scale(.77);
+}
+#submit-button:hover {
+    background-color: rgba(56, 153, 236, .8);
+}
+
+.layer-container {
+    position: absolute!important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, .7);
+    z-index: 121;
+}
+.layer-container>div {
+    width: 400px;
+    height: 200px;
+    border-radius: 18px;
+    margin: 150px auto;
+    background-color: #fff;
+    overflow: hidden;
+    box-shadow: 0 0 4px rgba(0, 0, 0, .3);
+}
+.layer-context {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    margin-top: 40px; 
+    font-size: 1.4em;
+    color: rgba(0, 0, 0, .7);
+}
+.layer-context::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+.layer-context>span {
+    display: block;
+    margin: 0 auto;
+}
+.layer-button {
+    display: block;
+    width: 150px;
+    height: 40px;
+    border-radius: 10px;
+    margin: 50px auto;
+    background-color: #0084ff;
+    color: #fff;
+}
+.active {
+    display: block;
+}
+.normal {
+    display: none;
+}
+.bottom-line {
+    position: absolute;
+    bottom: -6px;
+    width: 0;
+    height: 1.5px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: width .25s ease-in-out;
+    background-color: #3899ec;
+}
+.bottom-line-active {
+    width: 80%;
+}
+
+
+.tips {
+    display: block;
+    position: absolute;
+    width: 150px;
+    height: 30px;
+    opacity: 0;
+    text-align: center;
+    border-radius: 6px;
+    border: 0.5px solid rgba(0, 0, 0, .3);
+    box-shadow: 0 0 6px rgba(0, 0, 0, .3);
+    color: rgba(0, 0, 0, .7);
+    right: -100px;
+    top: 0;
+    transition: all .5s ease;
+    font-size: 12px;
+    line-height: 30px;
+    background-color: #fff;
+    z-index: 1;
+}
+.tip-active {
+    opacity: 1;
+}
+.tips::after {
+    position: absolute;
+    top: 9px;
+    left: -5.5px;
+    background-color: #fff;
+    content: "";
+    display: block;
+    transform: rotate(45deg);
+    width: 10px;
+    height: 10px;
+    border-bottom: 0.5px solid rgba(0, 0, 0, .3);
+    border-left: 0.5px solid rgba(0, 0, 0, .3);
+    /* box-shadow: 1 0 8px rgba(0, 0, 0, .3); */
+}
