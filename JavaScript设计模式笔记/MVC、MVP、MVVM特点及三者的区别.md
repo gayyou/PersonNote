@@ -75,6 +75,7 @@ let myapp = {};
 myapp.model = () => {
   let val = 0;
   
+  // model层的方法
   this.add = (indence) => {
     val += indence;
   }
@@ -119,6 +120,7 @@ myapp.controller = () => {
   let model = null,
       view = null;
   
+  // 初始化创造相应的对象
   this.init = () => {
     model = new this.model();
     view = new this.view();
@@ -136,3 +138,87 @@ myapp.controller = () => {
 }
 ```
 
+很显然，MVC模式中，model层只是定义了对model中数据的操控方法和响应时候view层的并没有直接有业务逻辑处理。
+
+1.而是有对应的观察者对象，这个观察者对象观察这个model是否发生了变化，再对view层进行更新。
+
+2.用户对view层进行操控的时候，直接把这个行为传送给controller层进行处理，controller通过调用model层，对model进行更改，从而触发model层的观察者对象，通过观察者对象重新渲染view层的该对象。
+
+总结为两点：
+
+- model层负责存储数据，存储通过观察者对象观察变量改变后通知view层重新渲染的观察者对象（记住是**存储**观察者对象及其通知方法）！
+- controller层对用户的输入进行处理后，通过调用model层的方法修改model属性，然后调用该model对象的观察者对象通知view层修改。
+- view层对页面进行渲染，同时也通过获取节点，添加controller函数的事件。
+
+****
+
+### MVP模式
+
+MVP模式是MVC模式的改良，由IBM的子公司Taligent提出。和MVC的相同之处在于：Controller/Presenter负责业务逻辑，Model管理数据，View负责显示。
+
+![](C:\Users\Administrator\Desktop\321.png)
+
+在MVC模式中，view层在进行渲染的时候是可以直接访问Model层的数据，但是在MVP中，View跟Model并不能直接互相访问，而是通过一个中介Presenter提供的接口进行互相访问更新。
+
+与MVC相比，MVP模式通过解耦View和Model，完全分离视图和模型使职责划分更加清晰；由于View不依赖Model，可以将View抽离出来做成组件，它只需要提供一系列接口提供给上层操作。
+
+其实这样讲也没有多大的效果，不如通过编写MVP模式的代码来了解这个MVP到底是什么东西吧
+
+```JavaScript
+myapp.model = () => {
+  
+  // 这个是model代码
+  let val = 0;
+  
+  this.add = (indence) => {
+    val += indence;
+  }
+  
+  this.sub = (indence) => {
+    val -= indence;
+  }
+  
+  this.getVal = () => val;
+} 
+
+// 下面是View层代码
+myapp.view = () => {
+    let documentElement = document.getElementBy....
+
+    this.render = (model) => {
+        documentElement.operate...
+    };
+
+    this.init = () => {
+        let presenter = new myapp.Presenter(this);
+				// 添加事件监听
+        documentElement.addListener....
+    };
+}
+    
+// 下面是Presenter层代码
+myapp.presenter = (view) => {
+	 	let _model = new myapp.Model();
+    let _view = view;
+		
+  	// 添加model对象在render函数中
+    _view.render(_model);
+
+  	// 业务处理方法
+    this.increase = function() {
+        _model.add(1);
+        _view.render(_model);
+    };
+
+    this.decrease = function() {
+        _model.sub(1);
+        _view.render(_model);
+    };
+}
+```
+
+由上面的代码可以看出：
+
+- MVP模式中Model层只是存储数据和提供数据读写的接口。并没有其他东西。
+- View层有对页面进行重新渲染的函数和新建一个Presenter对象的方法、添加事件监听，但并没有直接控制model的方法，即不会对model直接控制。
+- Presenter层反而是通过业务逻辑代码，当页面点击view层触发事件函数，从而对model层进行修改的同时对修改的结果进行对view层的修改，从而比MVC减少了一个观察者对象的监听。但是多了一些业务逻辑处理代码。
