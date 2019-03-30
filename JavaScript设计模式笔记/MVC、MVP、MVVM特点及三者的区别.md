@@ -52,13 +52,11 @@ MVC模式的由来
 
 到了Smalltalk-80这个版本的时候，一位叫Trygve Reenskaug的工程师为Smalltalk设计了MVC（Model-View-Controller）这种架构模式，极大地降低了GUI应用程序的管理难度，而后被大量用于构建桌面和服务器端应用程序。
 
-
-
 那么下面图解一下这个模式吧。
 
-![](C:\Users\Administrator\Desktop\123.png)
+![img](http://47.102.136.151:4000/personNote/MVC.png)
 
-[注释]用户输入是在view层进行输入的，但是处理的话是交给Controller进行处理的，所以上面的图的话，可以修改为输入再Controller进行输入，然后View层跟Controller层的双箭头编程C->V的箭头。这些都无关紧要。
+[注释]用户输入是在view层进行输入的，但是处理的话是交给ontroller进行处理的，所以上面的图的话，可以修改为输入再Controller进行输入，然后View层跟Controller层的双箭头编程C->V的箭头。这些都无关紧要。
 
 上面虚线指的是观察者对象对Model进行监听，只要Model变化了View会进行变化，实际上Model没有直接对View层进行控制，所以永达搜了虚线。
 
@@ -156,7 +154,7 @@ myapp.controller = () => {
 
 MVP模式是MVC模式的改良，由IBM的子公司Taligent提出。和MVC的相同之处在于：Controller/Presenter负责业务逻辑，Model管理数据，View负责显示。
 
-![](C:\Users\Administrator\Desktop\321.png)
+![img](http://47.102.136.151:4000/personNote/MVP.png)
 
 在MVC模式中，view层在进行渲染的时候是可以直接访问Model层的数据，但是在MVP中，View跟Model并不能直接互相访问，而是通过一个中介Presenter提供的接口进行互相访问更新。
 
@@ -229,7 +227,7 @@ myapp.presenter = (view) => {
 
 MVVM（Model-View-ViewModel）最早由微软提出。ViewModel指 "Model of View"——视图的模型。
 
-![](C:\Users\Administrator\Desktop\213.png)
+![img](http://47.102.136.151:4000/personNote/MVVM.png)
 
 MVVM把View和Model的同步逻辑自动化了。以前Presenter负责的View和Model同步不再手动地进行操作，而是交给框架所提供的数据绑定功能进行负责，只需要告诉它View显示的数据对应的是Model哪一部分即可。
 
