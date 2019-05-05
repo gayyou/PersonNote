@@ -311,7 +311,7 @@ Vue采用数据劫持&发布-订阅模式的方式，通过ES5提供的 `Object.
 
 [![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
 
-```
+```JavaScript
 var foo = {
   name: 'vue',
   version: '2.0'
