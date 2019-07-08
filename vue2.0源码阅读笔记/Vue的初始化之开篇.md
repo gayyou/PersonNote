@@ -684,7 +684,7 @@ const normalizeEvent = cached((name: string): {
 
 ```js
 export function initRender (vm: Component) {
-  vm._vnode = null // the root of the child tree
+  vm._vnode = null // the root of the child tree	// 初始化
   vm._staticTrees = null // v-once cached trees
   const options = vm.$options
   const parentVnode = vm.$vnode = options._parentVnode // the placeholder node in parent tree
@@ -695,17 +695,20 @@ export function initRender (vm: Component) {
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
+  // 这个是内部版本，就是可供vue编译器使用
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
   // normalization is always applied for the public version, used in
   // user-written render functions.
+  // 外部版本，这个让用户使用的。
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
 
   // $attrs & $listeners are exposed for easier HOC creation.
   // they need to be reactive so that HOCs using them are always updated
-  const parentData = parentVnode && parentVnode.data
+  const parentData = parentVnode && parentVnode.data	// 
 
   /* istanbul ignore else */
   if (process.env.NODE_ENV !== 'production') {
+    // 下面代码理解为添加响应
     defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, () => {
       !isUpdatingChildComponent && warn(`$attrs is readonly.`, vm)
     }, true)
@@ -853,4 +856,185 @@ export function updateChildComponent (
 
 最后，对于大家来讲，现在了解这些知识就足够了，至于 `$attrs` 和 `$listeners` 这两个属性的值到底是什么，等我们讲解虚拟DOM的时候再回来说明，这样大家更容易理解。
 
-##    
+###    5.生命钩子的回调方式
+
+```js
+callHook(vm, 'beforeCreate')
+initInjections(vm) // resolve injections before data/props
+initState(vm)
+initProvide(vm) // resolve provide after data/props
+callHook(vm, 'created')
+```
+
+我们可以看到接下来的代码是以上。我们可以看到在callHook之间调用了函数。了解过vue的生命周期的人可能会知道这两个callback就是响应vue的生命周期。
+
+```js
+export function callHook (vm: Component, hook: string) {
+  // #7573 disable dep collection when invoking lifecycle hooks
+  pushTarget()
+  const handlers = vm.$options[hook]  // 生命钩子回调函数
+  if (handlers) {
+    for (let i = 0, j = handlers.length; i < j; i++) {
+      // 进行执行函数
+      invokeWithErrorHandling(handlers[i], vm, null, vm, info)
+    }
+  }
+  if (vm._hasHookEvent) {
+    vm.$emit('hook:' + hook)
+  }
+  popTarget()
+}
+```
+
+简单来说，这个`callHook`就是调用vue对象已经定义好的生命周期回调函数。由于之前我们知道在选项合并的阶段，我们将生命周期回到函数组成一个数组并存在着，在这里的话就是通过遍历这个生命周期类型的回调函数数组并进行回调。并且带有`try...catch`语句来捕获开发者在生命周期回调函数中的出错。
+
+我们先来看一下循环里面函数的内容吧
+
+```js
+export function invokeWithErrorHandling (
+  handler: Function,	// 回调函数
+  context: any,		// 上下文
+  args: null | any[],	// 参数
+  vm: any,		// vue对象实例
+  info: string		// 信息
+) {
+  let res
+  try {
+    res = args ? handler.apply(context, args) : handler.call(context)  // 执行回调函数
+    if (res && !res._isVue && isPromise(res) && !res._handled) {
+      // 如果是Promise对象的话，是不会将异常外抛的，我们需要对其进行捕获
+      res.catch(e => handleError(e, vm, info + ` (Promise/async)`))
+      // issue #9511
+      // avoid catch triggering multiple times when nested calls
+      res._handled = true
+    }
+  } catch (e) {
+    // 捕获异常
+    handleError(e, vm, info)
+  }
+  return res
+}
+```
+
+`invokeWithErrorHanding`这个方法的作用是执行一些挂载函数，并判断返回值是不是Promise对象，如果是的话就会捕获内部的异常。并且也会捕获回调函数的异常并且在测试环境下进行提示开发者。
+
+我们回过头来再看一下这段代码：
+
+```js
+callHook(vm, 'beforeCreate')
+initInjections(vm) // resolve injections before data/props
+initState(vm)
+initProvide(vm) // resolve provide after data/props
+callHook(vm, 'created')
+```
+
+现在大家应该知道，`beforeCreate` 以及 `created` 这两个生命周期钩子的调用时机了。其中 `initState`包括了：`initProps`、`initMethods`、`initData`、`initComputed` 以及 `initWatch`。所以当 `beforeCreate` 钩子被调用时，所有与 `props`、`methods`、`data`、`computed` 以及 `watch` 相关的内容都不能使用，当然了 `inject/provide` 也是不可用的。
+
+作为对立面，`created` 生命周期钩子则恰恰是等待 `initInjections`、`initState` 以及 `initProvide`执行完毕之后才被调用，所以在 `created` 钩子中，是完全能够使用以上提到的内容的。但由于此时还没有任何挂载的操作，所以在 `created` 中是不能访问DOM的，即不能访问 `$el`。
+
+最后我们注意到 `callHook` 函数的最后有这样一段代码：
+
+```js
+if (vm._hasHookEvent) {
+  vm.$emit('hook:' + hook)
+}
+```
+
+其中 `vm._hasHookEvent` 是在 `initEvents` 函数中定义的，它的作用是判断是否存在**生命周期钩子的事件侦听器**，初始化值为 `false` 代表没有，当组件检测到存在**生命周期钩子的事件侦听器**时，会将 `vm._hasHookEvent` 设置为 `true`。那么问题来了，什么叫做**生命周期钩子的事件侦听器**呢？大家可能不知道，其实 `Vue` 是可以这么玩儿的：
+
+```html
+<child
+  @hook:beforeCreate="handleChildBeforeCreate"
+  @hook:created="handleChildCreated"
+  @hook:mounted="handleChildMounted"
+  @hook:生命周期钩子
+ />
+```
+
+如上代码可以使用 `hook:` 加 `生命周期钩子名称` 的方式来监听组件相应的生命周期事件。这是 `Vue` 官方文档上没有体现的，但你确实可以这么用，不过除非你对 `Vue` 非常了解，否则不建议使用。
+
+正是为了实现这个功能，才有了这段代码：
+
+```js
+if (vm._hasHookEvent) {
+  vm.$emit('hook:' + hook)
+}
+```
+
+另外大家可能会疑惑，`vm._hasHookEvent` 是在什么时候被设置为 `true` 的呢？或者换句话说，`Vue` 是如何检测是否存在生命周期事件侦听器的呢？对于这个问题等我们在讲解 `Vue` 事件系统时自然会知道。
+
+### 6.initState
+
+实际上根据如下代码所示：
+
+```js
+callHook(vm, 'beforeCreate')
+initInjections(vm) // resolve injections before data/props
+initState(vm)
+initProvide(vm) // resolve provide after data/props
+callHook(vm, 'created')
+```
+
+可以看到在 `initState` 函数执行之前，先执行了 `initInjections` 函数，也就是说 `inject` 选项要更早被初始化，不过由于初始化 `inject` 选项的时候涉及到 `defineReactive` 函数，并且调用了 `toggleObserving` 函数操作了用于控制是否应该转换为响应式属性的状态标识 `observerState.shouldConvert`，所以我们决定先讲解 `initState`，之后再来讲解 `initInjections` 和 `initProvide`，这才是一个合理的顺序，并且从 `Vue` 的时间线上来看 `inject/provide` 选项确实是后来才添加的。
+
+所以我们打开 `core/instance/state.js` 文件，找到 `initState` 函数，如下：
+
+```js
+export function initState (vm: Component) {
+  vm._watchers = []
+  const opts = vm.$options
+  if (opts.props) initProps(vm, opts.props)		// 进行初始化props
+  if (opts.methods) initMethods(vm, opts.methods)	// 初始化方法
+  if (opts.data) {	// 初始化data
+    initData(vm)
+  } else {
+    // data并没有东西的话，那么创建个对象并且进行观察
+    observe(vm._data = {}, true /* asRootData */)
+  }
+  if (opts.computed) initComputed(vm, opts.computed)	// 初始化
+  if (opts.watch && opts.watch !== nativeWatch) {
+    // watch存在并且在firefox浏览器下面并不是本地代码的话，那么就进行初始化
+    initWatch(vm, opts.watch)
+  }
+}
+```
+
+以上是 `initState` 函数的全部代码，我们慢慢来看，首先在 `Vue` 实例对象添加一个属性 `vm._watchers = []`，其初始值是一个数组，这个数组将用来存储所有该组件实例的 `watcher` 对象。随后定义了常量 `opts`，它是 `vm.$options` 的引用。接着执行了如下两句代码：
+
+```js
+if (opts.props) initProps(vm, opts.props)
+if (opts.methods) initMethods(vm, opts.methods)
+```
+
+如果 `opts.props` 存在，即选项中有 `props`，那么就调用 `initProps` 初始化 `props` 选项。同样的，如果 `opts.methods` 存在，则调用 `initMethods` 初始化 `methods` 选项。
+
+再往下执行的是这段代码：
+
+```js
+if (opts.data) {
+  initData(vm)
+} else {
+  observe(vm._data = {}, true /* asRootData */)
+}
+```
+
+首先判断 `data` 选项是否存在，如果存在则调用 `initData` 初始化 `data` 选项，如果不存在则直接调用 `observe` 函数观测一个空对象：`{}`。
+
+最后执行的是如下这段代码：
+
+```js
+if (opts.computed) initComputed(vm, opts.computed)
+if (opts.watch && opts.watch !== nativeWatch) {
+  initWatch(vm, opts.watch)
+}
+```
+
+采用同样的方式初始化 `computed` 选项，但是对于 `watch` 选项仅仅判断 `opts.watch` 是否存在是不够的，还要判断 `opts.watch` 是不是原生的 `watch` 对象。前面的章节中我们提到过，这是因为在 `Firefox` 中原生提供了 `Object.prototype.watch` 函数，所以即使没有 `opts.watch` 选项，如果在火狐浏览器中依然能够通过原型链访问到原生的 `Object.prototype.watch`。但这其实不是我们想要的结果，所以这里加了一层判断避免把原生 `watch` 函数误认为是我们预期的 `opts.watch` 选项。之后才会调用 `initWatch` 函数初始化 `opts.watch` 选项。
+
+通过阅读 `initState` 函数，我们可以发现 `initState` 其实是很多选项初始化的汇总，包括：`props`、`methods`、`data`、`computed` 和 `watch` 等。并且我们注意到 `props` 选项的初始化要早于 `data` 选项的初始化，那么这是不是可以使用 `props` 初始化 `data` 数据的原因呢？答案是：“是的”。接下来我们就深入讲解这些初始化工作都做了什么事情。下一章节我们将重点讲解 `Vue` 初始化中的关键一步：**数据响应系统**。
+
+## 总结
+
+![](./images/8.png)
+
+待阅读完毕后填写初始化的作用。
