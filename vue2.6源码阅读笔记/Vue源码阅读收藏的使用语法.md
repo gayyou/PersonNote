@@ -191,4 +191,28 @@ ArrayMethods.forEach(val => {
 })
 ```
 
-这就是`vue`中数组的方法也能触发更新数据对象的依赖的原因。。
+这就是`vue`中数组的方法也能触发更新数据对象的依赖的原因。
+
+### 3.返回元素序列化后的结果
+
+vue中在没有渲染模板字符串的时候，会将父容器作为模板，但是父容器是一个`dom`节点，那么怎么将这个`dom`节点转化为字符串呢？这就需要使用到`dom`节点的`outerHTML`属性。
+
+```js
+/**
+ * Get outerHTML of elements, taking care
+ * of SVG elements in IE as well.
+ * 返回整个元素的序列化结果
+ */
+function getOuterHTML (el: Element): string {
+  // 内容包含描述元素及其后代的序列化HTML片段
+  if (el.outerHTML) {
+    return el.outerHTML
+  } else {
+    // 如果没有序列化的方法的话，那么会在外面创建div包容这个标签并且返回容器的innerHTML
+    const container = document.createElement('div')
+    container.appendChild(el.cloneNode(true))
+    return container.innerHTML
+  }
+}
+```
+
