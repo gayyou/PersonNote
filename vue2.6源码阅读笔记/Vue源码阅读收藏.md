@@ -1,4 +1,4 @@
-# Vue源码阅读收藏的使用语法
+# Vue源码阅读收藏
 
 ## 一、性能类型语法
 
@@ -216,3 +216,42 @@ function getOuterHTML (el: Element): string {
 }
 ```
 
+## 三、实用和比较偏的语法
+
+### 1.实用的语法
+
+- 如何去掉字符串的首尾各一个字符？
+
+  ```js
+  let str = str.slice(1, -1);
+  ```
+
+  
+
+### 2.比较偏的知识点
+
+- `JSON.stringify`和`toString`的区别是什么？
+
+  1. 字符串，数字，布尔值的`JSON.stringify()`规则和`toString`基本相同。
+
+  2. 对于对象而言，除非是修改过，否则`toString()`方法返回的是内部属性，如`[object Object]`,`'[object Array]`。对于`JSON.stringify`则是返回字符串序列化的结果。
+
+  3. 对于一些不安全的`JSON`值，比如`null`、`undefined`。`toString`会报错，`JSON.stringify`并不会。
+
+  4. 有一个特别偏的点，在`Vue`源码中使用到`v-pre`属性的时候发现的：
+
+     ```js
+     const a = new Function('console.log()');
+     const b = new Function(JSON.stringify('console.log()'));
+     
+     // a
+     function() {
+       console.log()
+     }
+     // b
+     function() {
+       "console.log()"
+     }
+     ```
+
+     可以看出来用`JSON.stringify`返回的虽然也是字符串，但是还是会区别于普通的字符串。
