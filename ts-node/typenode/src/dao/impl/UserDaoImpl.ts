@@ -23,7 +23,7 @@ export class UserDaoImpl implements DaoInterface {
   }
 
   async delete(): Promise<void> {
-
+    
   }
   
   async update(): Promise<void> {
