@@ -4,11 +4,9 @@
 
 ps：多代码预警，本节因为涉及到的流程重要代码比较多，所以贴出了核心代码。
 
-### 1.代理对象和影响因子effect如何绑定？
+### 1.代理对象和影响因子effect如何绑定？（track）
 
-​	上一篇文章讲的是响应型数据的诞生。而前面说过，响应数据的诞生和它绑定观察者是两回事。那么响应型对象和影响因子`effect`是如何进行绑定依赖的呢？下面来进行讲解：
-
-#### 1）依赖添加（track函数）
+​	上一篇文章讲的是响应型数据的诞生。而前面说过，响应数据的诞生和它绑定观察者是两回事。那么响应型对象和影响因子`effect`是如何进行绑定依赖的呢？依赖的添加是在`track`方法中，下面来进行讲解：
 
 1. 什么时候进行调用`track`方法？
 
@@ -177,49 +175,55 @@ ps：多代码预警，本节因为涉及到的流程重要代码比较多，所
    }
    ```
 
-   `trigger`函数是进行跟数据绑定的所有依赖的搜集，搜集完毕直接执行依赖。初次看到这里，笔者也会疑惑：**Vue3.0**不准备使用队列来进行性能的提升了吗？其实不是，这是因为**Vue3.0**将观察者拆散了，重新定义了`effect`，是`Watcher`的精简版，执行策略是由创建者规定的，针对于三种观察者有三种执行策略，下一部分会进行讲解。阅读代码的时候会产生如下的问题：
+   ​	`trigger`函数是进行跟数据绑定的所有依赖的搜集，搜集完毕直接执行依赖。初次看到这里，笔者也会疑惑：**Vue3.0**不准备使用队列来进行性能的提升了吗？
 
-   - 为什么会先进行计算因子的执行，然后再执行其他方法呢？
+   ​	其实不是，这是因为**Vue3.0**将观察者拆散了，重新定义了`effect`，是`Watcher`的精简版，执行策略是由创建者规定的，针对于三种观察者有三种执行策略，下一部分会进行讲解。
 
-     这是因为在其他观察者中可能会对计算属性进行访问，也就是访问`getter`方法，如果计算属性在最后执行的话，会产生**数据与视图不一致问题**，也就是说读到脏数据。
+   阅读代码的时候会产生如下的问题：
 
-     **Vue3.0**两个策略来防止读到脏数据：
+   - 为什么会先进行带有计算属性`effect`的执行，然后再执行其他方法呢？
 
-     1. `computed`选项先行执行。
-     2. `computed`使用**同步代码**进行执行：如果在`watch`选项中修改到`computed`数据，那么搜集完后会同步执行，所以下一个观察者进行执行的时候拿到了最新数据。
+     是为了保证观察者的执行顺序：`computed`->`watch`->`render`，为什么要这么做？
 
-     ![fqwfwqfqw](images/fqwfwqfqw.png)
+     - 对于`computed`选项：这是因为在其他观察者中可能会对计算属性进行访问，也就是访问`getter`方法，如果计算属性在最后执行的话，会产生**数据与视图不一致问题**，也就是说读到脏数据。
+     - 对于`watch`选项：同样如果`watch`中修改了`render`所绑定的数据，如果`watch`在`render`后面执行，那么也会产生数据与视图不一致问题
 
-   - **Vue2.0**如何避免上述问题呢？
+   - **Vue3.0**和**Vue2.0**是如何来实现以上顺序呢？
 
-   - 按这么说，那**Vue2.0**是如何处理来避免读到脏数据呢？可以先阅读一下这篇文章：[从源码上看，Vue2.0每个生命周期钩子函数前都做了什么？](<https://juejin.im/post/5e243c826fb9a02fdc3a508b>) 中`created`生命周期钩子前处理选项的顺序。
+     1. 3.0：采取了一下两种策略：
 
-     首先确定一下一共有几种观察者：
+        1. 带有`computed`属性的`effect`的先执行：其中`computed`和`watch`选项的`effect`都有该属性，其中`computed`选项是同步代码，也就是遇到了直接执行，而`watch`采取了三种执行策略，但是都不会早于`computed`选项执行。即`computed`->`watch`
 
-     - `computed`：在`created`生命周期钩子前，在`watch`之前处理。
-     - `watch`：在`created`生命周期钩子前，但是在`computed`之后处理。
-     - `render`函数：在`mounted`之前。
+        2. `computed`使用**同步代码**进行执行：如果在`watch`选项中修改到`computed`数据，那么搜集完后会同步执行，所以下一个观察者进行执行的时候拿到了最新数据。
 
-     那么处理顺序为`computed`->`watch`->`render`。那么这么做有什么意图吗？
+           ![fqwfwqfqw](images/fqwfwqfqw.png)
 
-     要知道`watcher`实例是有一个属性，叫做`id`（自增），有两种作用：
+     2. 2.0：按这么说，那**Vue2.0**是如何处理来避免读到脏数据呢？先阅读一下这篇文章：[从源码上看，Vue2.0每个生命周期钩子函数前都做了什么？](<https://juejin.im/post/5e243c826fb9a02fdc3a508b>) 中`created`生命周期钩子前处理选项的顺序。
 
-     - 显示区别不同`watcher`
-     - **在观察者执行队列的时候按id顺序从小到大执行**！
+        首先确定一下几种观察者的初始化时间：
 
-     ![1580652820325](images/1580652820325.png)
+        - `computed`：在`created`生命周期钩子前，在`watch`之前处理。
+        - `watch`：在`created`生命周期钩子前，但是在`computed`之后处理。
+        - `render`函数：在`mounted`之前。
 
-     这是在执行队列前进行排序，如果执行队列的时候又触发了修改`watcher`，又是如何处理的呢？如下图
+        那么处理顺序为`computed`->`watch`->`render`。那么这么做有什么意图吗？
 
-     ![1580653351314](images/1580653351314.png)
+        要知道`watcher`实例是有一个属性，叫做`id`（自增），有两种作用：
 
-     在运行前和运行时候这两个策略，能够有效防止读到脏数据。
+        1. 显示区别不同`watcher`
+        2. **在观察者执行队列的时候按id顺序从小到大执行**！
+
+        ![1580652820325](../../../%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/PersonNote/vue-next%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/images/1580652820325.png)
+
+        这是在执行队列前进行排序，如果执行队列的时候又触发了修改`watcher`，又是如何处理的呢？如下图
+
+        ![1580653351314](../../../%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/PersonNote/vue-next%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/images/1580653351314.png)
+
+        在运行前和运行时候这两个策略，能够有效防止读到脏数据。
 
 3. 依赖绑定的更新：
 
    在触发依赖的终点是用`effect`构建时候传进来的`scheduler`策略来执行`effect`，不过在之前会进行依赖的重新绑定操作。我们可以看到`effect.ts`中的`createReactiveEffect`方法：
-
-   
 
    ```typescript
    function createReactiveEffect<T = any>(
@@ -319,7 +323,7 @@ function scheduleRun(
    }
    ```
 
-   所以对于渲染函数采用的是**Vue2.0**的执行队列模式，而执行队列的话是跟**Vue2.0**一致，不过它并没有考虑不兼容`Promise`对象的浏览器。
+   所以对于渲染函数采用的是**Vue2.0**的执行微观队列模式，而执行队列的话是跟**Vue2.0**一致，不过它并没有考虑不兼容`Promise`对象的浏览器，因为**Vue3.0**打包的时候会有两种版本，一种是支持`ES6`的浏览器，另外一种是针对于`IE`等低版本浏览器而是用**Vue2.0**版本。
 
 3. 接下来比较重要的一点是对`watch`选项的处理方式的讲解：
 
@@ -347,14 +351,19 @@ function scheduleRun(
    } else if (flush === 'pre') {
      scheduler = job => {
        if (!instance || instance.vnode.el != null) {
+         // instance.vnode.el != null  即当前VNode有挂载数据，也就是mounted到unMounted声明周期之间
+         // !instance 代表着是在执行生命周期钩子函数以外的时间，因为instance指向currentInstance，而currentInstance赋值的时候只有在触发生命周期钩子才不为空
          queueJob(job)
        } else {
+         // 这里执行的条件是  在mouted之前，并且是在生命周期钩子里面进行修改数据的时候才触发
          // with 'pre' option, the first call must happen before
          // the component is mounted so it is called synchronously.
+         // 第一次执行是在component之前，所以必须是同步执行
          job()
        }
      }
    } else {
+     // post 则放到post队列
      scheduler = job => {
        queuePostRenderEffect(job, suspense)
      }
@@ -362,6 +371,30 @@ function scheduleRun(
    ```
 
    - `sync`：同步，也就是和`computed`处理方式一致，触发依赖后直接同步执行。
-   - `pre`：
+
+   - `pre`：是`sync`和`queueJob`之间的摇摆人，而分界线在于`mounted`：
+
+     - 在元素挂载之前，并且是在生命周期钩子函数（`beforeCreate`、`created`等）修改数据的话，是`sync`。
+     - 在元素挂载之后，则是是用微观队列来进行执行。
+
+   - `post`：**Vue3.0**多了一个执行队列，是`postFlushCbs`，它是在`queueJob`执行完毕后进行执行的。它的调用过程是：
+
+     1. `queuePostFlushCb`（进行`postFlushCbs`入队后后，触发下一个微观事件进行执行`queueJob`）
+     2. `queueJob`执行完毕后，进行同步执行执行`postFlushCbs`队列。
+
+     所以`post`是在微观队列之后执行的。
 
 ### 4.小结
+
+1. 首先总结一下数据响应的整个流程：
+
+   首先是依赖的添加过程：
+
+   ![222](images/222.png)
+
+   其次是依赖触发流程：
+
+   ![3333](images/3333.png)
+
+2. 对于目前已经定义的三种观察者的执行顺序是`computed`->`watch`->`render`。而**Vue2.0**和**Vue3.0**采取的是完全不同的策略，不过它们的最终目的就是保证执行顺序按照上面来。
+

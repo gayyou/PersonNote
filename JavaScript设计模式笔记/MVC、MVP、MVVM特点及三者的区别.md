@@ -347,12 +347,8 @@ function defineReactive(obj, key, value) {
 }
 
 observe(foo)
-foo.name = 'angular' // “监听成功：vue --> angular”
+foo.name = 'angular' // “监听成功：vue --> angular”[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0)
 ```
-
-[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
-
- 
 
 上面完成了对数据对象的监听，接下来还需要在监听到变化后去通知订阅者，这需要实现一个消息订阅器 `Dep` ，Watcher通过 `Dep` 添加订阅者，当数据改变便触发 `Dep.notify()` ，Watcher调用自己的 `update()` 方法完成视图更新。
 
