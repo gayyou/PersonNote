@@ -79,7 +79,144 @@ output: {
 - `module.hot.accept`：代表模块执行热更新
 - `module.hot.decline`：当前模块更新时候一定要刷新页面
 
-### 热更新模块
+##### 7.webpack选项合并
 
+`npm install webpack-merge`：此插件能够实现webpack选项的合并，这样的话，能够根据不同的mode来分不同的文件，然后使用合并的方式来进行合并选项。
+
+##### 8.处理babel-loader使用import()报错的情况
+
+这是因为babel-loader暂时没有能够处理代码分割的能力，需要使用到
+
+`babel-plugin-dynamic-import-webpack`进行代码分割。
+
+##### 9.预处理、预加载模块
+
+webpack处理异步组件的时候，存在一个叫做魔术注释的东西，即可以使用注释来处理异步模块
+
+```js
+import(
+	/* webpackPrefetch: true */
+  'a.js'
+)
+
+import(
+	/* webpackPreload: true */
+  'a.js'
+)
+```
+
+进行处理模块，会自动在html的linked进行加载操作。
+
+##### 10.shim预置依赖
+
+对于一些语法、内置模块，webpack是能够支持的，但是对于一些用户所导进来的包作为全局变量，则webpack是不会去理解的，如果处理不当可能会导致错误，可以使用webpack内置模块ProvidePlugin插件
+
+```
+new Webpack.ProvidePlugin({
+  _: 'lodash'
+})
+```
+
+还可以使用按需加载
+
+```js
+new Webpack.ProvidePlugin(
+	['lodash', 'join']
+)
+```
+
+这样的话可以使用treeshaking来删除不必要的代码。
+
+这样处理的结果是我们在全局中，无需import语句即可使用。
+
+##### 全局export
+
+对于一些古老的lib模块，很多都没有导出语句，这时候我们可以通过export-loader来进行webpack配置上的导出。而不需要直接去修改古老的lib模块
+
+##### 加载polyfill
+
+`npm install babel-polyfill --save-dev`：使用polyfill来让浏览器支持一些ES6新语法，比如Promise等
+
+```js
+import 'babel-polyfill'
+```
+
+使用这些模块的时候，需要在所有模块之前同步导入，即在主文件头部里面进行导入。这样才能在所有的模块中使用。
+
+### 使用Webpack搭建Vue框架（JS版本）
+
+##### 1.初始化项目
+
+```shell
+npm init // 初始化项目
+```
+
+初始化项目目录：
+
+![1583844000517](images/1583844000517.png)
+
+首先初始化项目，创建如上图的项目目录，基于上面的项目目录来进行配置项目。
+
+按照以往的情况进行创建基本的目录，并且写好App.vue、main.js等等
+
+##### 2.需要的loader以及loader的作用
+
+首先我们要确定需要处理什么文件
+
+```
+js、vue、css、scss
+```
+
+所以我们针对于以上文件来进行处理
+
+- vue文件，需要有能够解析Vue文件、style标签文件、模板编译文件，所以需要用到的loader如下
+
+  - vue-loader：处理vue文件
+  - vue-template-compiler：处理vue的template标签内容。所以vue通过webpack项目进行预处理模板，而通过api调用的需要在运行时候进行处理模板，所以使用框架相对会快。
+  - vue-loader-plugin：包含在vue-loader中的插件，专门处理vue文件的script内容
+  - vue-style-loader：处理vue文件的style标签内容，处理成为内联的style，不过与mini-css-extract-plugin相冲突。
+
+- scss和css
+
+  - scss相比于css文件需要使用scss-loader处理一遍，变成css文件，然后接下来步骤和css一致
+
+    以下和css文件一致
+
+  - css-loader：解释 `@import` 和 `url()`，对里面的路径进行处理
+
+  - vue-style-loader：功能类似于 `style-loader`，是将 `css-loader` 加载后的 `css`作为样式标签动态注入到文档中，是专门应用于 `vue` 模板环境下的样式表加载器。因此如果配置了 `vue-style-loader` 就不需要再配置 `style-loader`了。（**最后处理成为内联的style**）
+
+- js
+
+  跟普通的webpack配置一致，如果使用babel-loader的话，需要加入动态载入plugin来处理ES6的代码分割。
+
+  - babel-loader：将ES6语法转为ES5，如箭头函数，let、const处理成var
+
+  - 如果需要用到ES6的方法， 那么需要使用到babel-polyfill处理
+
+    ```js
+    {
+      "plugins": [
+        ["transform-runtime", {
+          "helpers": true,
+          "polyfill": true,
+          "regenerator": true,
+          "moduleName": "babel-runtime"
+        }]
+      ]
+    }
+    ```
+
+##### 3.需要的plugin和plugin的作用
+
+plugin是进行loader处理后，进行对js进行处理。需要用到的plugin如下：
+
+- html文件处理：`html-webpack-plugin`：对html文件进行处理，自动挂载所需的js和css文件。
+- 压缩css并且分包：`mini-css-extract-plugin`：需要进行配置名字规则， 并且在loader中设置处理
+- 每次打包前进行清除输出文件：`clean-webpack-plugin`
+- webpack.LoaderOptionsPlugin：在vue.config.js中一些选项，比如publicPath、chainWebpack进行配置
+- webpack.HotModuleReplacementPlugin：进行热更新处理。需要在devServer设置hot处理true，则可以使用热更新。
+
+### 热更新模块
 
 
