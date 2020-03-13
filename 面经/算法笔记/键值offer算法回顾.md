@@ -710,6 +710,8 @@ var isStraight = function(arr) {
 
 #### 16.骰子出现所有值的概率
 
+
+
 #### 17.最小值栈和最大值队列
 
 - 最小值栈使用多一个栈来实现，思路是如果压进栈中的值小于栈顶的值，那么就进行压入最小值栈
@@ -1149,3 +1151,186 @@ const Resolution = (strArr) => {
 
 - 使用容量为K的小顶堆即可。
 
+#### 35.字符串的所有可能的排列
+
+- 首先要进行全排列
+  - 全排列要从小到大排起，每个数据都要从0开始到n-1，然后排到中间的时候需要进行标记某个数据是否已经被使用，所以需要有一个visited
+- 然后去重
+
+#### 36.树的序列化与反序列化
+
+- 使用先序遍历序列化，模仿先序遍历反序列化
+
+```js
+const { BN1 } = require('./TestExample');
+
+const BinaryNode = require('./datastruction/BinaryNode')
+
+const process = (node, arr) => {
+  if (node === null) {
+    arr.push('#')
+    return ;
+  }
+
+  arr.push(node.val);
+  process(node.left, arr);
+  process(node.right, arr);
+};
+
+const func = (node) => {
+  let arr = []
+  process(node, arr);
+  return arr;
+}
+
+const build = (arr) => {
+  if (arr.length === 0) {
+    return null;
+  }
+
+  let idx = 0;
+
+  function process(arr) {
+    if (arr[idx] == '#') {
+      idx++;
+      return null;
+    }
+
+    let node = new BinaryNode(arr[idx++]);
+
+    node.left = process(arr);
+    node.right = process(arr);
+
+    return node;
+  }
+
+  return process(arr);
+}
+console.log(func(BN1));
+console.log(build(func(BN1)));
+// console.log(BN1)
+
+```
+
+#### 37.二叉搜索树转为双向链表
+
+- 注意的点是左边的节点的左侧链表为左子树的最大值
+- 节点的右边节点是右子树的最小值
+
+#### 38.复杂链表的复制
+
+- 先在每个节点后面创建一个与它相同的节点
+- 然后跳着来拆分链表。
+
+#### 39.对称二叉树
+
+- 不使用额外空间
+- 使用两个指针的函数，然后分别从左右两侧进行递归遍历
+
+```js
+const Resolution = (node) => {
+  if (node === null) {
+    return true;
+  }
+  function process(p1, p2) {
+    if (p1 === null && p2 === null) {
+      return true;
+    }
+
+    if (p1 === null || p2 === null) {
+      return false;
+    }
+
+    if (p1.val !== p2.val) {
+      return false;
+    }
+
+    return process(p1.left, p2.right) && process(p1.right, p2.left);
+  }
+
+  return process(node.left, node.right);
+};
+
+```
+
+#### 40.镜面复制二叉树
+
+- 跟判断对称二叉树一致，但是要防止子树内部镜面
+
+```js
+const Resolution = (node) => {
+  if (node === null) {
+    return null;
+  }
+
+  function process(example, tar) {
+    if (example.left !== null) {
+      tar.right = new TreeNode(example.left.val);
+      process(example.left, tar.right);
+    }
+
+    if (example.right !== null) {
+      tar.left = new TreeNode(example.right.val);
+      process(example.right, tar.left);
+    }
+  }
+
+  let root = new TreeNode(node.val);
+
+  process(node, root);
+
+  return root;
+};
+
+```
+
+#### 41.判断子树结构
+
+- 递归遍历+相同树结构判断
+
+```js
+const Resolution = (sup, sub) => {
+  if (sup === null && sub !== null) {
+    return false;
+  } else if (sub === null) {
+    return true;
+  }
+
+  function travelTree(node) {
+    if (node === null) {
+      return false;
+    }
+
+    if (node.val === sub.val) {
+      if (check(sub, node)) {
+        return true;
+      }
+    }
+
+    return travelTree(node.left) || travelTree(node.right);
+  }
+
+  function check(model, tar) {
+    if (model === null) {
+      return true;
+    }
+
+    if (model.val !== tar.val) {
+      return false;
+    }
+
+    return check(model.left, tar.left) && check(model.right, tar.right);
+  }
+
+  return travelTree(sup);
+};
+
+```
+
+#### 42.合并两个排序数组
+
+- 使用递归和非递归
+- 递归：找出当前两个链表的最小值，然后以最小值的下一个项和另外一个链表进行寻找最小值，然后当前最小值返回。
+- 非递归：双指针法
+
+#### 43.
