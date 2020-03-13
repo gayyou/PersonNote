@@ -646,3 +646,506 @@ const Resolution = (n1, n2) => {
 
 #### 13.股票的最大利润
 
+- 使用贪婪法，记住股票的最低价，然后遇到一个价位的股票就去比较大小
+
+```js
+var maxProfit = function(priceArray) {
+  if (priceArray === null || priceArray.length === 0) {
+    return 0;
+  }
+
+  let maxProfit = 0, minPrice = Infinity;
+
+  for (let i = 0; i < priceArray.length; i++) {
+    minPrice = Math.min(minPrice, priceArray[i]);
+
+    maxProfit = Math.max(maxProfit, priceArray[i] - minPrice);
+  }
+  
+  return maxProfit;
+};
+```
+
+#### 14.圆圈中的最后的数字
+
+- 待定
+
+#### 15.扑克牌中最大的顺子
+
+```js
+var isStraight = function(arr) {
+  let container = new Array(14).fill(0);
+
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] !== 0 && container[arr[i]] >= 1) {
+      return false;
+    }
+    container[arr[i]]++;
+  }
+
+  let isInOrder = false;
+  let orderLen = 0
+
+  for (let i = 1; i < container.length; i++) {
+    if (container[i] != 0 && !isInOrder) {
+      isInOrder = true;
+    }
+
+    if (isInOrder) {
+      if (container[i] === 0) {
+        if (container[0] == 0 && orderLen < arr.length) {
+            return false;
+        } else {
+            container[0]--;
+        }
+      }
+
+      orderLen++;
+    }
+  }
+
+  return true;
+};
+```
+
+#### 16.骰子出现所有值的概率
+
+#### 17.最小值栈和最大值队列
+
+- 最小值栈使用多一个栈来实现，思路是如果压进栈中的值小于栈顶的值，那么就进行压入最小值栈
+- 最大值队列需要多一个双端队列来进行设定为最大值，滑动窗口思路。
+
+#### 18.滑动窗口的最大值
+
+- 使用双端队列来进行滑动窗口操作
+- 对于插入队列端，只要顶部的值小于元素，就出栈操作。
+
+```js
+var maxSlidingWindow = function(arr, k) {
+  if (arr === null || arr.length === 0) {
+    return [];
+  }
+
+  let deque = [];
+
+  function peekTop(deque) {
+    return deque[deque.length - 1];
+  }
+
+  let result = [];
+
+  for (let i = 0; i < k; i++) {
+    while (deque.length !== 0 && arr[peekTop(deque)] < arr[i]) {
+      deque.pop();
+    }
+
+    deque.push(i);
+  }
+
+  for (let i = k - 1; i < arr.length; i++) {
+    while (deque[0] <= i - k) {
+      deque.shift();
+    }
+
+    while (deque.length !== 0 && arr[peekTop(deque)] < arr[i]) {
+      deque.pop();
+    }
+
+    deque.push(i);
+    result.push(arr[deque[0]]);
+  }
+
+  return result;
+};
+```
+
+#### 19.连续数字和为目标数
+
+- 找出所有值连续和为目标的正数数组
+- 思路1
+  - 从0 - n/2，中，有且仅有一个数组长度为i的数组和为tar。
+- 思路2
+  - 使用双指针法拉扯，如果和小于tar，那么往右延伸
+  - 如果和大于tar，左边进行收缩
+  - 如果和为目标值，进行添加至结果集，并且left和right都往右边挪一位
+
+#### 20.只出现一次的数字
+
+- 对于其他数字都出现偶数的条件下，直接遍历然后进行与运算
+
+- 如果其他数字是出现奇数的情况，那么要将每个数字的所有bit位进行相加，然后判断结果的比特位是否为0来进行与结果相加，不过可以通过异或操作来与结果进行合并。代码如下
+
+  ```js
+  var singleNumber = function(arr) {
+      if (arr === null || arr.length === 0) {
+      throw new Error('Array is Not Null');
+    }
+    
+    let res = 0;
+  
+    for (let i = 0; i < 32; i++) {
+      let sum = 0;
+      for (let j = 0; j < arr.length; j++) {
+        sum +=  (arr[j] >> i) & 1;  // 进行处理某一位
+      }
+  
+      res ^= (sum % 3) << i;   // 使用异或和移位运算，结果来进行合并
+    }
+    
+    return res;
+  };
+  ```
+
+#### 21.判断一棵树是否是平衡二叉树
+
+```js
+const IsABBST = (node) => {
+  if (node === null) {
+    return {
+      height: 0,
+      isBBST: true
+    }
+  }
+
+  let maxHeight = 0;
+  let factory = 0;
+
+  let leftItem = IsABBST(node.left);
+  let rightItem = IsABBST(node.right);
+
+  if (leftItem.isBBST && rightItem.isBBST) {
+    maxHeight = Math.max(leftItem.height, rightItem.height);
+    factory = Math.abs(leftItem.height - rightItem.height);
+  } else {
+    return {
+      isBBST: false
+    }
+  }
+
+  return {
+    height: maxHeight + 1,
+    isBBST: factory <= 1
+  }
+};
+
+```
+
+#### 22.二叉树的深度
+
+- 采用递归遍历的方式
+
+```js
+const Resolution = (root) => {
+  if (root == null) {
+    return 0;
+  }
+  
+  let leftH = Resolution(root.left);
+  let rightH = Resolution(root.right);
+  
+  return 1 + (leftH > rightH ? leftH : rightH);
+};
+```
+
+#### 23.二叉树的第K大节点
+
+- 使用右中左遍历方式
+
+```js
+const inTree = (root, k) => {
+  if (root === null) {
+    throw new Error('');
+  }
+
+  let targetNode = null;
+  let count = 0;
+
+  function travel(root) {
+    if (root == null || targetNode != null) {
+      return ;
+    }
+
+    travel(root.right);
+    // 右中左进行遍历，所以先遍历完右边再添加
+    count++;
+
+    if (count === k) {
+      targetNode = root;
+    }
+    
+    travel(root.left)
+  }
+
+  travel(root);
+
+  return targetNode.val;
+};
+```
+
+#### 24.数组的第K大元素
+
+- 使用快排的分治思想
+- 注意划分的时候，内部循环需要判断左侧是否小于右侧
+
+```
+const inArray = (arr, k) => {
+  if (arr === null || arr.length < k) {
+    throw new Error('Array is not define or length is zero')
+  }
+
+  function partition(arr, left, right) {
+    let key = arr[left];
+
+    while (left < right) {
+      while (left < right && arr[right] <= arr[left]) {
+        right--;
+      }
+
+      arr[left] = arr[right];
+
+      while (left < right && arr[left] >= arr[right]) {
+        left++;
+      }
+
+      arr[right] = arr[left];
+    }
+
+    arr[left] = key;
+
+    return left;
+  }
+
+  let resultMid = partition(arr, 0, arr.length - 1);
+  let start = 0;
+  let end = arr.length - 1;
+  while (resultMid !== k - 1) {
+    if (resultMid < k - 1) {
+      start = resultMid + 1;
+      resultMid = partition(arr, start, end);
+    } else {
+      end = resultMid - 1;
+      resultMid = partition(arr, start, end);
+    }
+  }
+
+  return arr[k - 1];
+};
+
+```
+
+#### 25.找出数组中所有的逆序列
+
+- 使用归并排序的思想，先拆分，然后组合的时候，只要右边有数字放到tempArray的时候，就增加数量，数量大小为 leftArray.length - i
+
+```js
+const Resolution = (arr) => {
+  if (arr === null || arr.length === 0) {
+    return [];
+  }
+
+  let count = 0;
+
+  function split(arr, left, right) {
+
+    if (left >= right) {
+      return [arr[left]];
+    }
+
+    let mid = Math.floor((left + right) / 2);
+    let tempArray = new Array(right - left + 1);
+
+    let leftArr = split(arr, left, mid);
+    let rightArr = split(arr, mid + 1, right);
+
+    // 接下来是进行处理的过程
+    let i = 0, j = 0, newIdx = 0;
+
+    while (i < leftArr.length && j < rightArr.length) {
+      if (leftArr[i] <= rightArr[j]) {
+        tempArray[newIdx++] = leftArr[i++];
+      } else {
+        tempArray[newIdx++] = rightArr[j++];
+        count += leftArr.length - i;
+      }
+    }
+
+    while (i < leftArr.length) {
+      tempArray[newIdx++] = leftArr[i++];
+    }
+
+    while (j < rightArr.length) {
+      tempArray[newIdx++] = rightArr[j++];
+    }
+
+    return tempArray;
+  }
+
+  split(arr, 0, arr.length - 1);
+
+  return count;
+};
+```
+
+#### 26.丑数
+
+- 利用动态规划，大的数由小的数进行乘法然后得出，就可以保证只有2,3,5三个因数，并且需要由小到大，所以需要三个指针，都从0开始，每次求得最小值后，进行递增操作。
+
+```js
+const Resolution = (n) => {
+  if (n <= 5) {
+    return n;
+  }
+
+  let dp = new Array(n).fill(0);
+  let p1 = 0, p2 = 0, p3 = 0;
+  dp[0] = 1;
+
+  for (let i = 1; i < n; i++) {
+    dp[i] = Math.min(dp[p1] * 2, Math.min(dp[p2] * 3, dp[p3] * 5));
+
+    if (dp[i] === dp[p1] * 2) p1++;
+    if (dp[i] === dp[p2] * 3) p2++;
+    if (dp[i] === dp[p3] * 5) p3++;
+  }
+
+  return dp[dp.length - 1];
+};
+```
+
+#### 27.最长无重复子串
+
+使用hashMap来进行记录每个字符的下标，然后通过计算得出最大值。
+
+```js
+  if (str === null || str.length === 0) {
+    return '';
+  }
+    
+  if (str.trim().length === 0) {
+      return 1;
+  }
+
+  let idxContainer = new Map();
+  let maxCount = 0;
+  let count = 0;
+
+  for (let i = 0; i < str.length; i++) {
+    let pre = idxContainer.has(str[i]) ? idxContainer.get(str[i]) : -1;
+
+    if (pre === -1 || i - pre > count) {
+      count++;
+    } else {
+      maxCount = Math.max(count, maxCount);
+      count = i - pre;
+    }
+    idxContainer.set(str[i], i);
+  }
+
+  return Math.max(count, maxCount);
+```
+
+#### 28.礼物的最大价值
+
+- 采用动态规划方式
+
+```js
+const Resolution = (matrix) => {
+  if (matrix === null || matrix.length === 0) {
+    return -1;
+  }
+
+  let rowLen = matrix[0].length;
+  let dp = new Array(rowLen).fill(0);
+
+  for (let i = 0; i < matrix.length; i++) {
+    for (let j = 0; j < rowLen; j++) {
+      if (j === 0) {
+        dp[j] += matrix[i][j];
+      } else {
+        dp[j] = Math.max(dp[j], dp[j - 1]) + matrix[i][j];
+      }
+    }
+  }
+
+  return dp[dp.length - 1];
+};
+
+```
+
+#### 29.把数字翻译成字符串
+
+- 给定一个数字，我们按照如下规则把它翻译为字符串：0 翻译成 “a” ，1 翻译成 “b”，……，11 翻译成 “l”，……，25 翻译成 “z”。一个数字可能有多个翻译。请编程实现一个函数，用来计算一个数字有多少种不同的翻译方法。
+
+
+```
+const Resolution = (n) => {
+  if (n < 0) {
+    return -1;
+  }
+
+  if (n < 10) {
+    return 1;
+  }
+
+  let str = n.toString();
+
+  let dp = new Array(str.length).fill(0);
+  dp[0] = 1;
+
+  if (parseInt(str.slice(0, 2)) <= 25) {
+    dp[1] = 2;
+  } else {
+    dp[1] = 1;
+  }
+
+  for (let i = 2; i < dp.length; i++) {
+    dp[i] = dp[i - 1];
+
+    if (str[i] !== '0' && parseInt(str.slice(i - 1, i + 1)) <= 25) {
+      dp[i] += dp[i - 2];
+    }
+  }
+
+  return dp[dp.length - 1];
+};
+```
+
+#### 30.把数组排成最小的数
+
+输入一个正整数数组，把数组里所有数字拼接起来排成一个数，打印能拼接出的所有数字中最小的一个。
+
+```js
+const Resolution = (strArr) => {
+  if (strArr === null) {
+    return null;
+  }
+
+  strArr.sort((str1, str2) => {
+    let newStr1 = str1 + str2;
+    let newStr2 = str2 + str1;
+
+    return newStr1 === newStr2 ? 0 : newStr1 > newStr2;
+  });
+
+  let result = '';
+
+  strArr.forEach(item => {
+    result += item;
+  });
+
+  return result;
+};
+```
+
+#### 31.1 - n 中1出现的次数
+
+#### 32. 数字序列中某个下标的数字
+
+#### 33.数据流中的中位数
+
+- 使用两个堆：大顶堆和小顶堆，然后首先先把数据放到大顶堆中，遇到偶数的时候，把大顶堆堆顶放到小顶堆中，这样循环即可。
+
+#### 34.最小K个数据
+
+- 使用容量为K的小顶堆即可。
+
