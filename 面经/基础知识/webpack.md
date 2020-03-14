@@ -186,6 +186,8 @@ js、vue、css、scss
 
   - vue-style-loader：功能类似于 `style-loader`，是将 `css-loader` 加载后的 `css`作为样式标签动态注入到文档中，是专门应用于 `vue` 模板环境下的样式表加载器。因此如果配置了 `vue-style-loader` 就不需要再配置 `style-loader`了。（**最后处理成为内联的style**）
 
+  - 使用`Autoprefixer`插件进行前缀添加
+
 - js
 
   跟普通的webpack配置一致，如果使用babel-loader的话，需要加入动态载入plugin来处理ES6的代码分割。
@@ -219,4 +221,8 @@ plugin是进行loader处理后，进行对js进行处理。需要用到的plugin
 
 ### 热更新模块
 
+### 打包优化
 
+- 开启多进程并发打包，使用happyPack进行并发打包
+- babel-loader?cacheDirectory：缓存，加快重新编译的速度
+- 配置cache：true，是否启用缓存来提升构建速度。

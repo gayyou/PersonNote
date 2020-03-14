@@ -1333,4 +1333,29 @@ const Resolution = (sup, sub) => {
 - 递归：找出当前两个链表的最小值，然后以最小值的下一个项和另外一个链表进行寻找最小值，然后当前最小值返回。
 - 非递归：双指针法
 
-#### 43.
+#### 43.正则匹配
+
+- 先判断当前是否符合
+- 在判断第二位是否是*
+  - 如果是*，就要进行分叉，一种是0，一种是多，所以要用递归进行分支
+  - 如果不是的话，那么就进行判断且进位
+
+```js
+var isMatch = function(str, model) {
+  if (model.length === 0) {
+    return str.length === 0;
+  }
+  
+  let firstMatch = (str.length !== 0)
+                &&(model[0] === str[0] || model[0] === '.');
+    
+  if (model.length >= 2 && model[1] === '*') {
+      return isMatch(str, model.slice(2)) 
+    		|| (firstMatch && isMatch(str.slice(1), model));
+  }
+  
+  
+  return firstMatch && isMatch(str.slice(1), model.slice(1));
+};
+```
+
