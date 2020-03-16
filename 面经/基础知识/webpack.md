@@ -221,8 +221,55 @@ plugin是进行loader处理后，进行对js进行处理。需要用到的plugin
 
 ### 热更新模块
 
+webpack的热更新实现过程是监听本地文件是否发生改变，即监听文件描述符，如果发生改变，触发webpack重新编译，编译结果通过WebSocket，即利用服务器推送的方式告知客户端，客户端使用JSONP进行获取文件，然后通过hash对比删除旧版本的文件，然后进行重新部署新版本的模块。
+
 ### 打包优化
 
 - 开启多进程并发打包，使用happyPack进行并发打包
 - babel-loader?cacheDirectory：缓存，加快重新编译的速度
 - 配置cache：true，是否启用缓存来提升构建速度。
+
+### 常见问题
+
+##### 1.常见的loader有哪些？
+
+- file-loader：将文件输出到文件夹中，并且使用相对路径去引用
+- url-loader：将文件处理成为base64编码嵌入到网页中
+- babel-loader：将ES6的语法转为ES5的语法。但是不会将ES6的pollyfill录入
+- style-loader：将样式以style标签嵌入到html中
+- css-loader：将css进行处理，并且输出到文件中，用linked标签进行引用。
+- image-loader：压缩图片
+- eslint-loader：使用eslint检查代码
+- vue-loader：处理vue文件
+- vue-compiler-loader：将vue的模板进行编译处理。
+
+##### 2.常见的plugin？
+
+- html-webpack-plugin：处理html文件
+- commons-chunk-plugin：处理公共代码
+- hotModuleloadplugin：热更新模块。
+- ugly
+
+##### 3.如何构建多页面应用
+
+- entry多个入口，并且将公共代码抽离开来，开始common-chunk-plugin，将公共代码统一处理。
+
+##### 4.webpack的作用
+
+- webpack是一个模块打包工具，对于模块所引用的文件会进行递归打包，最后输出成为文件。
+
+##### 5.webpack-dev-server的两种模式
+
+- 服务器模式：即访问服务器地址，会返回一个html文件，然后进行渲染引用。
+- 第三方库调用模式：最后处理成为一个js文件，然后自己写一个html文件去引用。
+
+##### 6.热更新流程
+
+1. 使用webpack-dev-server创建一个express的服务器，并且开启一个WebSocket端口
+2. 进行webpack编译，供用户访问网页
+3. 浏览器访问html文件，并且加载js文件。与服务端进行WebSocket连接
+4. 当服务器中的文件进行修改的时候，触发webpack监听文件的描述符（轮询方式），并重新进行编译处理，修改文件编译处理后的hash通过WebSocket发送给客户端。
+5. 客户端通过判断是否更新还是说重新刷新页面
+6. 如果是更新的话，需要用到ajax请求到express拿到修改后的文件的地址，通过jsonP的请求获取到相应模块
+7. 进行模块替换。
+8. 更改已经修改的文件，渲染页面。

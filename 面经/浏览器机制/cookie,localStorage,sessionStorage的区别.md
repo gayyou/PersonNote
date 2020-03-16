@@ -16,3 +16,4 @@
 
 - Cookie在发送请求的时候，会携带上去
 - LocalStorage和SessionStorage不是自动和后台交互
+
