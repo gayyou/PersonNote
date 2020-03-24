@@ -205,7 +205,7 @@ function preOrder(root) {
 
 - 中序遍历
 
-```
+```js
 function midOrder(root) {
     if (isUndef(root)) {
       return ;
@@ -233,7 +233,7 @@ function midOrder(root) {
 
 - 后序遍历
 
-```
+```js
 function postOrder(root) {
     // 后续遍历的时候，需要有一个指针来进行判断出来防止重复操作，
     if (isUndef(root)) {
@@ -250,11 +250,14 @@ function postOrder(root) {
         stack.push(temp);
         temp = temp.left;
       }
-
+			
+      // 首先查看顶部的节点
       temp = stack.pop();
 
       if (isDef(temp.right) && temp.right !== preNode) {
         // 说明右边没有遍历过,先将右边压栈
+        // 因为后面还要拿到当前值
+        stack.push(temp);
         stack.push(temp.right);
         temp = temp.right;
       } else {
@@ -268,6 +271,10 @@ function postOrder(root) {
 
     return result;
   }
+
+Array.prototype.peek() {
+  return this[this.length - 1];
+}
 ```
 
 #### 5.二叉树中序遍历的下一个结点
@@ -564,7 +571,7 @@ const Resolution = (matrix, str) => {
 
 - 给你一根长度为 n 的绳子，请把绳子剪成整数长度的 m 段（m、n都是整数，n>1并且m>1），每段绳子的长度记为 k[0],k[1]...k[m] 。请问 k[0]*k[1]*...*k[m] 可能的最大乘积是多少？例如，当绳子的长度是8时，我们把它剪成长度分别为2、3、3的三段，此时得到的最大乘积是18。
 
-- ### 本题可用动态规划，自底向上，然后很简单。。
+- 本题可用动态规划，自底向上，然后很简单。。
 
 ```
 if (n <= 2) {
@@ -1079,7 +1086,7 @@ const Resolution = (matrix) => {
 - 给定一个数字，我们按照如下规则把它翻译为字符串：0 翻译成 “a” ，1 翻译成 “b”，……，11 翻译成 “l”，……，25 翻译成 “z”。一个数字可能有多个翻译。请编程实现一个函数，用来计算一个数字有多少种不同的翻译方法。
 
 
-```
+```js
 const Resolution = (n) => {
   if (n < 0) {
     return -1;
